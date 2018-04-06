@@ -1,3 +1,6 @@
-make file : make example_apps/pagerank 
+cd graphchi-cpp-master/
 
-run file : bin/example_apps/pagerank file GRAPH-NAME
+make file : make example_apps/Gorder
+
+run file : bin/example_apps/Gorder file GRAPHNAME.txt
+
