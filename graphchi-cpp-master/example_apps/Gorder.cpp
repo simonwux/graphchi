@@ -52,7 +52,7 @@ using namespace graphchi;
 struct my_vertex_type
 {
     int outdegree; //num_outedges()
-    int indegree; //num_inedges()
+    int indegree;  //num_inedges()
 };
 struct my_edge_type
 {
@@ -108,6 +108,7 @@ std::string outputfilename = "";
 int outputi = 0;
 std::vector<int> tmporder2;
 std::vector<int> tmporder3;
+clock_t start, end;
 bool compare(const int &a, const int &b)
 {
     if (graph[a].outdegree + graph[a].indegree < graph[b].outdegree + graph[b].indegree)
@@ -537,8 +538,9 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                 //std::vector<int> tmporder3;
                 tmporder3.clear();
                 tmporder3.resize(v.num_outedges());
-                for (int i=0;i<v.num_outedges();i++) tmporder3[i]=v.outedge(i)->vertex_id();
-                std::sort(tmporder3.begin(),tmporder3.end(),compare2);
+                for (int i = 0; i < v.num_outedges(); i++)
+                    tmporder3[i] = v.outedge(i)->vertex_id();
+                std::sort(tmporder3.begin(), tmporder3.end(), compare2);
                 Savefile.open(outputfilename.c_str(), ios::app);
                 for (int j = 0; j < v.num_outedges(); j++)
                 {
@@ -548,8 +550,11 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                     Savefile << u << '\t' << v2 << "\n";
                 }
                 Savefile.close();
-                if (outputi < (int)ginfo.nvertices - 1) {outputi++;
-                ginfo.scheduler->add_task(tmporder2[outputi]);}
+                if (outputi < (int)ginfo.nvertices - 1)
+                {
+                    outputi++;
+                    ginfo.scheduler->add_task(tmporder2[outputi]);
+                }
             }
             // for (int i = 0; i < order.size(); i++)
             //     std::cout << order[i] << "\n";
@@ -701,6 +706,13 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                             reverseorder[retorder[i]] = i;
                         }
                         rcmorderflag = true;
+
+                        std::cout << " readGraph is complete." << endl;
+                        end = clock();
+                        std::cout << "Time Cost: " << (double)(end - start) / CLOCKS_PER_SEC << "\n";
+
+                        //greedyorderstart
+                        start = clock();
                         // std::cout << "size" << retorder.size() << "\n";
                         // for (int i = 0; i < retorder.size(); i++)
                         //     std::cout << "retorder" << retorder[i] << "\n";
@@ -763,7 +775,7 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
 
                 if (graph[reverseorder[tmpindex]].outdegree <= hugevertex)
                 {
-                    std::cout << "phase2start\n";
+                    //std::cout << "phase2start\n";
                     gcontext.scheduler->add_task(reverseorder[tmpindex]);
                 }
                 else
@@ -905,7 +917,10 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                 {
                     retorder2[order2[i]] = i;
                 }
-
+                end = clock();
+                std::cout << "ReOrdered Time Cost: " << (double)(end - start) / CLOCKS_PER_SEC << "\n";
+                std::cout << "Begin Output the Reordered Graph"
+                          << "\n";
                 // for (int i = 0; i < vsize; i++)
                 // {
                 //     std::cout << "i" << i << "rcmorder" << retorder[i] << "greedy" << retorder2[retorder[i]] << "\n";
@@ -914,14 +929,17 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
 
                 tmporder2.clear();
                 tmporder2.resize(vsize);
-                for (int i=0;i<vsize;i++) tmporder2[i]=i;
-                std::sort(tmporder2.begin(),tmporder2.end(),compare2);
+                for (int i = 0; i < vsize; i++)
+                    tmporder2[i] = i;
+                std::sort(tmporder2.begin(), tmporder2.end(), compare2);
                 Savefile.open(outputfilename.c_str());
                 Savefile.close();
                 outputi = 0;
                 for (int i = 0; i < 1; i++)
                 {
                     gcontext.scheduler->add_task(tmporder2[i]);
+
+                    
                     //gcontext.scheduler->add_task(i);
                     //ReOrderedGraph[u].reserve(graph[i + 1].outstart - graph[i].outstart);
 
@@ -949,6 +967,8 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
 
 int main(int argc, const char **argv)
 {
+
+    start = clock();
     /* GraphChi initialization will read the command line 
        arguments and the configuration file. */
     graphchi_init(argc, argv);
@@ -960,12 +980,16 @@ int main(int argc, const char **argv)
     /* Basic arguments for application */
     std::string filename = get_option_string("file"); // Base filename
     //std::cout<<filename<<"\n";
-    for (int i=0;i<filename.size();i++){
-        if (filename[i] == '.') break; else outputfilename = outputfilename + filename[i];
+    for (int i = 0; i < filename.size(); i++)
+    {
+        if (filename[i] == '.')
+            break;
+        else
+            outputfilename = outputfilename + filename[i];
     }
     outputfilename = outputfilename + "_gorder.txt";
-    std::cout<<"outputfile: "<<outputfilename<<"\n";
-    int niters = get_option_int("niters", 100000000);   // Number of iterations
+    std::cout << "outputfile: " << outputfilename << "\n";
+    int niters = get_option_int("niters", 100000000); // Number of iterations
     bool scheduler = true;                            // Whether to use selective scheduling
 
     /* Detect the number of shards or preprocess an input to create them */
