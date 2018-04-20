@@ -184,7 +184,7 @@ namespace graphchi {
             
             disable_vertexdata_storage = false;
 
-            membudget_mb = get_option_int("membudget_mb", 1024);
+            membudget_mb = get_option_int("membudget_mb", 2000);
             nupdates = 0;
             iter = 0;
             work = 0;
@@ -194,8 +194,8 @@ namespace graphchi {
             degree_handler = NULL;
             vertex_data_handler = NULL;
             enable_deterministic_parallelism = true;
-            load_threads = get_option_int("loadthreads", 2);
-            exec_threads = get_option_int("execthreads", omp_get_max_threads());
+            load_threads = get_option_int("loadthreads", 4);
+            exec_threads = get_option_int("execthreads", 1/*omp_get_max_threads()*/);
             maxwindow = 40000000;
 
             /* Load graph shard interval information */
@@ -467,7 +467,8 @@ namespace graphchi {
             work = nupdates = 0;
             
             for(iter=0; iter<niters; iter++) {
-                logstream(LOG_INFO) << "In-memory mode: Iteration " << iter << " starts. (" << chicontext.runtime() << " secs)" << std::endl;
+                if (iter % 100000 == 0)
+                    logstream(LOG_INFO) << "In-memory mode: Iteration " << iter << " starts. (" << chicontext.runtime() << " secs)" << std::endl;
                 chicontext.iteration = iter;
                 if (iter > 0) // First one run before -- ugly
                     userprogram.before_iteration(iter, chicontext);

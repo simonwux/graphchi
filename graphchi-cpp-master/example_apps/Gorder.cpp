@@ -108,7 +108,10 @@ std::string outputfilename = "";
 int outputi = 0;
 std::vector<int> tmporder2;
 std::vector<int> tmporder3;
-clock_t start, end;
+clock_t start, end, exec_start, exec_end;
+double exec_sum = 0;
+int k1 = 1;
+bool sumtimeflag = false;
 bool compare(const int &a, const int &b)
 {
     if (graph[a].outdegree + graph[a].indegree < graph[b].outdegree + graph[b].indegree)
@@ -136,6 +139,8 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
      */
     void update(graphchi_vertex<VertexDataType, EdgeDataType> &v, graphchi_context &ginfo)
     {
+        if (ginfo.iteration != 0 && !outputflagstart)
+            exec_start = clock();
 
         if (ginfo.iteration == 0)
         {
@@ -143,15 +148,18 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                on each run, GraphChi will modify the data files. To start from scratch, it is easiest
                do initialize the program in code. Alternatively, you can keep a copy of initial data files. */
             // vertex.set_data(init_value);
-            for (int i = 0; i < v.num_outedges(); i++)
-            {
-                graph[v.outedge(i)->vertex_id()].indegree++;
-            }
+            graph[v.id()].indegree = v.num_inedges();
+            graph[v.id()].outdegree = v.num_outedges();
+            //std::cout<<v.id()<<"indegree"<<graph[v.id()].indegree<<"outdegree"<<graph[v.id()].outdegree<<"\n";
+            // for (int i = 0; i < v.num_outedges(); i++)
+            // {
+            //     graph[v.outedge(i)->vertex_id()].indegree++;
+            // }
 
-            for (int i = 0; i < v.num_inedges(); i++)
-            {
-                graph[v.inedge(i)->vertex_id()].outdegree++;
-            }
+            // for (int i = 0; i < v.num_inedges(); i++)
+            // {
+            //     graph[v.inedge(i)->vertex_id()].outdegree++;
+            // }
 
             // graph[0].outstart = 0;
             // graph[0].instart = 0;
@@ -266,8 +274,8 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                                 unitheap.update[retorder[u]]++;
                             }
 
-                            if (i == v.num_inedges() - 1)
-                                phase1flag = true;
+
+                            if (i == v.num_inedges() - 1) phase1flag = true;
                             if (graph[u].outdegree > 1)
                             {
                                 phase1flag = false;
@@ -496,8 +504,7 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                     {
                         phase4flag = false;
                         int u = v.inedge(i)->vertex_id();
-                        if (i == v.num_inedges() - 1)
-                            phase4flag = true;
+                        if (i == v.num_inedges() - 1) phase4flag = true;
                         if (graph[u].outdegree <= hugevertex)
                         {
                             if (__builtin_expect(unitheap.update[retorder[u]] == 0, 0))
@@ -582,6 +589,12 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
 
             // v.set_data(new_value);
         }
+
+        if (ginfo.iteration != 0 && !outputflagstart)
+        {
+            exec_end = clock();
+            exec_sum = exec_sum + (double)(exec_end - exec_start) / CLOCKS_PER_SEC;
+        }
     }
 
     /**
@@ -623,6 +636,9 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
         // 	order.push_back(2);
         //     gcontext.scheduler->add_task(2);
         // }
+        if (!outputflagstart)
+            exec_start = clock();
+
         int vsize = (int)gcontext.nvertices;
         if (iteration == 0)
         {
@@ -669,12 +685,13 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                     //std:: cout<<"asdfasdfasdfsadfsdaf\n";
                     //int vsize = (int)gcontext.nvertices;
                     bool flag = true;
-                    for (int k = 0; k < vsize; k++)
+                    for (int k = k1; k < vsize; k++)
                     {
                         int i = degreevertex[k];
                         //if (k<10) std::cout<<"degreevertex"<<i<<"\n";
                         if (BFSflag[i] == false)
                         {
+                            k1 = k + 1;
                             flag = false;
                             nonewtaskflag = false;
                             //			QueFlag[i]=true;
@@ -781,10 +798,13 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                 else
                     phase2flag = true;
                 //int vsize = (int)gcontext.nvertices;
-                if ((counttt < vsize - 1 - zero.size()))
+                if ((counttt < vsize - 1 - zero.size())){
                     whileflag = false;
-                else
+                    std::cout<<"whilestarts\n";
+                }
+                else{
                     whileflag = true;
+                }
             }
             if (phase1flag && phase2flag && !whileflag)
             {
@@ -886,6 +906,12 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
 
             if (phase2flag && whileflag && !outputflagstart)
             {
+                if (!outputflagstart)
+                {
+                    exec_end = clock();
+                    exec_sum = exec_sum + (double)(exec_end - exec_start) / CLOCKS_PER_SEC;
+                }
+
                 std::cout << "whilefinished\n";
                 order2.insert(order2.end() - 1, zero.begin(), zero.end());
 
@@ -926,6 +952,22 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                 //     std::cout << "i" << i << "rcmorder" << retorder[i] << "greedy" << retorder2[retorder[i]] << "\n";
                 // }
                 outputflagstart = true;
+                //outputfbdegree
+                // Savefile.open(("fbindegree.txt"));
+                // for (int i = 0;i<vsize;i++){
+                //     Savefile<<graph[i].indegree<<'\n';
+                // }
+                // Savefile.close();
+                // Savefile.open(("fboutdegree.txt"));
+                // for (int i = 0;i<vsize;i++){
+                //     Savefile<<graph[i].outdegree<<'\n';
+                // }
+                // Savefile.close();
+                // Savefile.open(("fbdegree.txt"));
+                // for (int i = 0;i<vsize;i++){
+                //     Savefile<<graph[i].indegree + graph[i].outdegree<<'\n';
+                // }
+                // Savefile.close();
 
                 tmporder2.clear();
                 tmporder2.resize(vsize);
@@ -939,7 +981,6 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                 {
                     gcontext.scheduler->add_task(tmporder2[i]);
 
-                    
                     //gcontext.scheduler->add_task(i);
                     //ReOrderedGraph[u].reserve(graph[i + 1].outstart - graph[i].outstart);
 
@@ -947,6 +988,17 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                 }
                 //vector<int>().swap(tmporder2);
             }
+        }
+
+        if (!outputflagstart)
+        {
+            exec_end = clock();
+            exec_sum = exec_sum + (double)(exec_end - exec_start) / CLOCKS_PER_SEC;
+        }
+        if (outputflagstart && !sumtimeflag)
+        {
+            sumtimeflag = true;
+            std::cout << "exec_sum: " << exec_sum << '\n';
         }
     }
 
@@ -995,7 +1047,7 @@ int main(int argc, const char **argv)
     /* Detect the number of shards or preprocess an input to create them */
     int nshards = convert_if_notexists<EdgeDataType>(filename,
                                                      get_option_string("nshards", "auto"));
-
+    //std::cout<<"nshards"<<nshards<<"\n";
     /* Run */
     MyGraphChiProgram program;
     graphchi_engine<VertexDataType, EdgeDataType> engine(filename, nshards, scheduler, m);
