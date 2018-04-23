@@ -62,12 +62,14 @@ struct my_edge_type
 typedef my_vertex_type VertexDataType;
 typedef vid_t EdgeDataType;
 
+int vsize = 0;
+const int maxvsize = 1000000;
 VertexDataType *graph;
 std::vector<int> degreevertex;
 bool *BFSflag;
 std::vector<int> order;
-std::vector<int> retorder;
-std::vector<int> reverseorder;
+int retorder[maxvsize];
+int reverseorder[maxvsize];
 std::vector<int> tmp;
 int now;
 bool nonewtaskflag;
@@ -150,6 +152,7 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
             // vertex.set_data(init_value);
             graph[v.id()].indegree = v.num_inedges();
             graph[v.id()].outdegree = v.num_outedges();
+            if (v.id()>vsize) vsize = v.id();
             //std::cout<<v.id()<<"indegree"<<graph[v.id()].indegree<<"outdegree"<<graph[v.id()].outdegree<<"\n";
             // for (int i = 0; i < v.num_outedges(); i++)
             // {
@@ -259,6 +262,7 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                     {
                         phase1flag = false;
                         int u = v.inedge(i)->vertex_id();
+                        if (i == v.num_inedges() - 1) phase1flag = true;
                         if (graph[u].outdegree <= hugevertex)
                         {
                             if (unitheap.update[retorder[u]] == 0)
@@ -310,6 +314,8 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
             }
             else if (popvflag && !binaryflag)
             {
+                // if (ginfo.iteration > 187000)
+                // std::cout<<"rcmorder10860phasepopv: "<<retorder[10860]<<"\n";
                 //std::cout << v.id() << "outdegree" << graph[v.id()].outdegree << "huge" << hugevertex;
                 if (graph[v.id()].outdegree <= hugevertex && !popvphase1flag)
                 {
@@ -443,7 +449,11 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
             }
             else if (!phase3flag)
             {
-                //std::cout << "phase3inside\n";
+
+                // if (ginfo.iteration > 187000)
+                // std::cout<<"rcmorder10860phase3: "<<retorder[10860]<<"\n";
+                // if (ginfo.iteration > 187000)
+                // std::cout << "phase3inside\n";
                 for (int i = 0; i < v.num_outedges(); i++)
                 {
 
@@ -465,14 +475,18 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                         unitheap.update[retorder[w]]++;
                     }
                 }
-                //std::cout << "phase3done\n";
+                // if (ginfo.iteration > 187000)
+                // std::cout << "phase3done\n";
                 phase3flag = true;
             }
             else if (!phase4flag)
             {
-                //std::cout<<"phase4start\n";
+                // if (ginfo.iteration > 187000)
+                // std::cout<<"rcmorder10860phase4: "<<retorder[10860]<<"\n";
                 if (phase4subflag)
                 {
+                //     if (ginfo.iteration > 187000)
+                // std::cout<<"rcmorder10860phasesubstart4: "<<retorder[10860]<<"\n";
                     for (int j = 0; j < v.num_outedges(); j++)
                     {
 
@@ -496,23 +510,34 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                     }
                     phase4subflag = false;
                     ginfo.scheduler->add_task(reverseorder[vvv]);
+                //         if (ginfo.iteration > 187000)
+                // std::cout<<"rcmorder10860phase4subdone: "<<retorder[10860]<<"\n";
                 }
                 else
                 {
+                //     if (ginfo.iteration > 187000)
+                // std::cout<<"rcmorder10860phase4mainstart: "<<retorder[10860]<<"\n";
                     phase4flag = true;
                     for (int i = phase41; i < v.num_inedges(); i++)
                     {
+                        // if (ginfo.iteration > 188000) std::cout<<"haha1\n";
                         phase4flag = false;
                         int u = v.inedge(i)->vertex_id();
                         if (i == v.num_inedges() - 1) phase4flag = true;
                         if (graph[u].outdegree <= hugevertex)
                         {
+
+                            //if (ginfo.iteration > 188000) std::cout<<"haha2\n";
                             if (__builtin_expect(unitheap.update[retorder[u]] == 0, 0))
                             {
+
+                            //if (ginfo.iteration > 188000) std::cout<<"haha21\n";
                                 unitheap.IncrementKey(retorder[u]);
                             }
                             else
                             {
+
+                                //if (ginfo.iteration > 188000) std::cout<<"haha22\n";
 #ifndef Release
                                 if (unitheap.update[retorder[u]] == INT_MAX)
                                     unitheap.update[retorder[u]] = INT_MAX / 2;
@@ -520,10 +545,18 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                                 unitheap.update[retorder[u]]++;
                             }
 
+                            //if (ginfo.iteration > 188000) std::cout<<"u: "<<u<<"haha3\n";
+                            //if (ginfo.iteration > 188000) std::cout<<"retu: "<<retorder[10860]<<"haha3\n";
+                            //if (ginfo.iteration > 188000) std::cout<<"popvu: "<<popvexist[retorder[u]]<<"haha3\n";
+                            //if (i == v.num_inedges() - 1) phase4flag = true;
                             if (popvexist[retorder[u]] == false)
                             {
+
+                                //if (ginfo.iteration > 188000) std::cout<<"haha31\n";
                                 if (graph[u].outdegree > 1)
                                 {
+
+                                    //if (ginfo.iteration > 188000) std::cout<<"haha32\n";
                                     phase41 = i + 1;
                                     phase4subflag = true;
                                     phase4flag = false;
@@ -533,10 +566,14 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                             }
                             else
                             {
+
+                                //if (ginfo.iteration > 188000) std::cout<<"haha33\n";
                                 popvexist[retorder[u]] = false;
                             }
                         }
                     }
+                //     if (ginfo.iteration > 187000)
+                // std::cout<<"rcmorder10860phase4maindone: "<<retorder[10860]<<"\n";
                 }
             }
             else if (!outputflag)
@@ -557,7 +594,7 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                     Savefile << u << '\t' << v2 << "\n";
                 }
                 Savefile.close();
-                if (outputi < (int)ginfo.nvertices - 1)
+                if (outputi < vsize - 1)
                 {
                     outputi++;
                     ginfo.scheduler->add_task(tmporder2[outputi]);
@@ -605,10 +642,10 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
         if (iteration == 0)
         {
             /* initialize  each vertex with its own lable */
-            graph = new VertexDataType[ginfo.nvertices + 1];
+            graph = new VertexDataType[maxvsize];
 
             //memset(&a,0,sizeof(a));
-            for (int i = 0; i < (int)ginfo.nvertices + 1; i++)
+            for (int i = 0; i < maxvsize; i++)
             {
                 graph[i] = {
                     outdegree : 0,
@@ -639,13 +676,14 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
         if (!outputflagstart)
             exec_start = clock();
 
-        int vsize = (int)gcontext.nvertices;
         if (iteration == 0)
         {
+            vsize = vsize + 1;
+            std::cout<<"vsize: "<<vsize<<"\n";
 
             BFSflag = new bool[vsize];
             memset(BFSflag, 0, sizeof(bool) * vsize);
-            degreevertex.resize(gcontext.nvertices);
+            degreevertex.resize(vsize);
             for (int i = 0; i < vsize; i++)
             {
                 degreevertex[i] = i;
@@ -712,13 +750,15 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                             //std::quit();
                         }
 
-                        retorder.resize(vsize);
+                        //retorder.resize(vsize);
                         for (int i = 0; i < order.size(); i++)
                         {
                             retorder[order[i]] = order.size() - 1 - i;
                         }
-                        reverseorder.resize(vsize);
-                        for (int i = 0; i < retorder.size(); i++)
+                        // if (gcontext.iteration > 187000)
+                        // std::cout<<"rcmorder10860: "<<retorder[10860]<<"\n";
+                        //reverseorder.resize(vsize);
+                        for (int i = 0; i < vsize; i++)
                         {
                             reverseorder[retorder[i]] = i;
                         }
@@ -789,7 +829,8 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
             else if (phase1flag && !phase2flag)
             {
                 std::cout << "heapsize" << unitheap.heapsize << "\n";
-
+                // if (gcontext.iteration > 187000)
+                // std::cout<<"rcmorder10860phase1: "<<retorder[10860]<<"\n";
                 if (graph[reverseorder[tmpindex]].outdegree <= hugevertex)
                 {
                     //std::cout << "phase2start\n";
@@ -797,6 +838,8 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                 }
                 else
                     phase2flag = true;
+                // if (gcontext.iteration > 187000)
+                // std::cout<<"rcmorder10860phase2: "<<retorder[10860]<<"\n";
                 //int vsize = (int)gcontext.nvertices;
                 if ((counttt < vsize - 1 - zero.size())){
                     whileflag = false;
@@ -817,6 +860,9 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                     sum3 += time4 - time3;
 #endif
 
+
+                //     if (gcontext.iteration > 187000)
+                // std::cout<<"rcmorder10860reset: "<<retorder[10860]<<"\n";
                     //int vsize = (int)gcontext.nvertices;
                     if ((counttt >= vsize - 1 - zero.size()))
                         whileflag = true;
@@ -841,9 +887,16 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                     //     std::cout << "linkkey" << unitheap.LinkedList[i].key;
                     //     std::cout << "update" << unitheap.update[i] << "\n";
                     // }
+                //     if (gcontext.iteration > 187000)
+                // std::cout<<"rcmorder10860resetfinish: "<<retorder[10860]<<"\n";
+                    //int vsize = (int)gcontext.nvertices;
                 }
                 if (!afterpopvflag)
                 {
+
+
+                //     if (gcontext.iteration > 187000)
+                // std::cout<<"rcmorder10860popvstart00: "<<retorder[10860]<<"\n";
 //std::cout<<"whilestartpart\n";
 #ifndef Release
                     if (counttt % 1000000 == 0)
@@ -859,11 +912,17 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                     time1 = clock();
 #endif
 
+                //     if (gcontext.iteration > 187000)
+                // std::cout<<"rcmorder10860popvstart01: "<<retorder[10860]<<"\n";
                     vvv = unitheap.ExtractMax();
                     counttt++;
+
+                //     if (gcontext.iteration > 187000)
+                // std::cout<<"rcmorder10860popvstart02: "<<retorder[10860]<<"\n";
 #ifndef Release
                     time2 = clock();
 #endif
+
                     order2.push_back(vvv);
                     unitheap.update[vvv] = INT_MAX / 2;
 
@@ -880,10 +939,19 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                         binaryflag = false;
                         gcontext.scheduler->add_task(reverseorder[popv]);
                     }
+
+                //     if (gcontext.iteration > 187000)
+                // std::cout<<"rcmorder10860popvstart03: "<<retorder[10860]<<"\n";
                     afterpopvflag = true;
+
+                //     if (gcontext.iteration > 187000)
+                // std::cout<<"rcmorder10860popvstart: "<<retorder[10860]<<"\n";
                 }
                 if (!popvflag && afterpopvflag && !phase3flag)
                 {
+
+                //     if (gcontext.iteration > 187000)
+                // std::cout<<"rcmorder10860popvfinish: "<<retorder[10860]<<"\n";
 //std::cout<<"phase3start\n";
 #ifndef Release
                     time3 = clock();
@@ -899,6 +967,7 @@ struct MyGraphChiProgram : public GraphChiProgram<VertexDataType, EdgeDataType>
                 if (!popvflag && afterpopvflag && phase3flag && !phase4startflag)
                 {
                     phase4startflag = true;
+                    phase41 = 0;
                     //std::cout << "phase4start\n";
                     gcontext.scheduler->add_task(reverseorder[vvv]);
                 }
