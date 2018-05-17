@@ -730,6 +730,7 @@ namespace graphchi {
             if (svertex_t().computational_edges()) {
                 // Heuristic
                 set_maxwindow(membudget_mb * 1024 * 1024 / 3 / 100);
+                if (iter % 100000 == 0)
                 logstream(LOG_INFO) << "Set maxwindow:" << maxwindow << std::endl;
             }
             
@@ -778,6 +779,8 @@ namespace graphchi {
             
             /* Main loop */
             for(iter=0; iter < niters; iter++) {
+
+                if (iter % 1000 == 0)
                 logstream(LOG_INFO) << "Start iteration: " << iter << std::endl;
                 
                 initialize_iter();
@@ -803,6 +806,8 @@ namespace graphchi {
                 if (use_selective_scheduling) {
                     if (scheduler != NULL) {
                         if (!scheduler->has_new_tasks) {
+
+                            if (iter % 100000 == 0)
                             logstream(LOG_INFO) << "No new tasks to run!" << std::endl;
                             break;
                         }
@@ -857,6 +862,8 @@ namespace graphchi {
                     memoryshard->set_disable_async_writes(randomization);
                     
                     sub_interval_st = interval_st;
+
+                    if (iter % 100000 == 0)
                     logstream(LOG_INFO) << chicontext.runtime() << "s: Starting: " 
                     << sub_interval_st << " -- " << interval_en << std::endl;
                     
@@ -870,10 +877,13 @@ namespace graphchi {
                                                                 size_t(membudget_mb) * 1024 * 1024);
                         assert(sub_interval_en >= sub_interval_st);
                         
+                       
+                        if (iter % 100000 == 0)
                         logstream(LOG_INFO) << "Iteration " << iter << "/" << (niters - 1) << ", subinterval: " << sub_interval_st << " - " << sub_interval_en << std::endl;
                                                 
                         bool any_vertex_scheduled = is_any_vertex_scheduled(sub_interval_st, sub_interval_en);
                         if (!any_vertex_scheduled) {
+                            if (iter % 100000 == 0)
                             logstream(LOG_INFO) << "No vertices scheduled, skip." << std::endl;
                             sub_interval_st = sub_interval_en + 1;
                             modification_lock.unlock();
@@ -885,6 +895,9 @@ namespace graphchi {
                         graphchi_edge<EdgeDataType> * edata = NULL;
                         
                         std::vector<svertex_t> vertices(nvertices, svertex_t());
+
+                        
+                        if (iter % 100000 == 0)
                         logstream(LOG_DEBUG) << "Allocation " << nvertices << " vertices, sizeof:" << sizeof(svertex_t)
                         << " total:" << nvertices * sizeof(svertex_t) << std::endl;
                         init_vertices(vertices, edata);
@@ -894,6 +907,7 @@ namespace graphchi {
                         
                         modification_lock.unlock();
                         
+                        if (iter % 100000 == 0)
                         logstream(LOG_INFO) << "Start updates" << std::endl;
                         /* Execute updates */
                         if (!is_inmemory_mode()) {
@@ -904,6 +918,7 @@ namespace graphchi {
 
                             exec_updates_inmemory_mode(userprogram, vertices); 
                         }
+                        if (iter % 100000 == 0)
                         logstream(LOG_INFO) << "Finished updates" << std::endl;
                         
                         
@@ -953,6 +968,8 @@ namespace graphchi {
                 /* Check if user has defined a last iteration */
                 if (chicontext.last_iteration >= 0) {
                     niters = chicontext.last_iteration + 1;
+                    
+                    if (iter % 100000 == 0)
                     logstream(LOG_DEBUG) << "Last iteration is now: " << (niters-1) << std::endl;
                 }
                 iteration_finished();
